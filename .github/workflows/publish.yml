@@ -13,7 +13,7 @@ jobs:
 
       - name: Zip module
         run: |
-          zip -r rg-module.zip rg/
+          zip -r rg-module.zip . -i "rg_module/*"
 
       - name: Upload to Azure DevOps Artifact Feed
         run: |
