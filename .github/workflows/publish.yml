@@ -1,0 +1,24 @@
+name: Publish Module to ADO
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Zip module
+        run: |
+          zip -r rg-module.zip rg/
+
+      - name: Upload to Azure DevOps Artifact Feed
+        run: |
+          curl -u ":${{ secrets.ADO_PAT }}" \
+          -X PUT \
+          "https://pkgs.dev.azure.com/${{ secrets.ADO_ORG }}/${{ secrets.ADO_PROJECT }}/_apis/packaging/feeds/${{ secrets.ADO_FEED }}/items?api-version=7.1-preview.1" \
+          -H "Content-Type: application/zip" \
+          --data-binary "@rg-module.zip"
