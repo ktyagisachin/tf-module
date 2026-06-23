@@ -1,24 +1,38 @@
-name: Publish Module to ADO
+name: Publish Module to Azure DevOps Artifacts
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   publish:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-      - name: Zip module
+      - name: Zip Terraform Module
         run: |
-          zip -r rg-module.zip . -i "rg_module/*"
+          zip -r rg-module.zip rg_module/
 
-      - name: Upload to Azure DevOps Artifact Feed
+      - name: Install Azure CLI extension for artifacts
         run: |
-          curl -u ":${{ secrets.ADO_PAT }}" \
-          -X PUT \
-          "https://pkgs.dev.azure.com/${{ secrets.ADO_ORG }}/${{ secrets.ADO_PROJECT }}/_apis/packaging/feeds/${{ secrets.ADO_FEED }}/items?api-version=7.1-preview.1" \
-          -H "Content-Type: application/zip" \
-          --data-binary "@rg-module.zip"
+          az extension add --name azure-devops
+
+      - name: Login to Azure DevOps
+        run: |
+          echo "${{ secrets.ADO_PAT }}" | az devops login
+
+      - name: Set default config
+        run: |
+          az devops configure --defaults organization=https://dev.azure.com/${{ secrets.ADO_ORG }} project=${{ secrets.ADO_PROJECT }}
+
+      - name: Publish to Azure Artifacts Feed
+        run: |
+          az artifacts universal publish \
+            --feed "${{ secrets.ADO_FEED }}" \
+            --name "rg-module" \
+            --version "1.0.${{ github.run_number }}" \
+            --description "Terraform RG Module" \
+            --path rg-module.zip
