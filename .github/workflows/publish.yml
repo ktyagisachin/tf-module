@@ -16,21 +16,39 @@ jobs:
         run: |
           zip -r rg-module.zip rg_module/
 
-      - name: Install Azure CLI extension for artifacts
+      - name: Install Azure DevOps Extension
         run: |
-          az extension add --name azure-devops
+          az extension add --name azure-devops --yes
 
       - name: Login to Azure DevOps
         run: |
           echo "${{ secrets.ADO_PAT }}" | az devops login
 
-      - name: Set default config
+      - name: Configure Defaults
         run: |
-          az devops configure --defaults organization=https://dev.azure.com/${{ secrets.ADO_ORG }} project=${{ secrets.ADO_PROJECT }}
+          az devops configure \
+            --defaults \
+            organization=https://dev.azure.com/${{ secrets.ADO_ORG }} \
+            project=${{ secrets.ADO_PROJECT }}
 
-      - name: Publish to Azure Artifacts Feed
+      - name: Debug Configuration
+        run: |
+          echo "ORG=${{ secrets.ADO_ORG }}"
+          echo "PROJECT=${{ secrets.ADO_PROJECT }}"
+          echo "FEED=${{ secrets.ADO_FEED }}"
+
+      - name: List Available Feeds
+        run: |
+          az artifacts feed list \
+            --organization "https://dev.azure.com/${{ secrets.ADO_ORG }}" \
+            --project "${{ secrets.ADO_PROJECT }}"
+
+      - name: Publish Package
         run: |
           az artifacts universal publish \
+            --organization "https://dev.azure.com/${{ secrets.ADO_ORG }}" \
+            --project "${{ secrets.ADO_PROJECT }}" \
+            --scope project \
             --feed "${{ secrets.ADO_FEED }}" \
             --name "rg-module" \
             --version "1.0.${{ github.run_number }}" \
