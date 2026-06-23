@@ -10,41 +10,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Zip Terraform Module
+      - name: Verify Module Folder
         run: |
-          zip -r rg-module.zip rg_module/
+          pwd
+          ls -la
+          ls -la rg_module
 
       - name: Install Azure DevOps Extension
         run: |
           az extension add --name azure-devops --yes
 
-      - name: Login to Azure DevOps
+      - name: Configure Azure DevOps
         env:
           AZURE_DEVOPS_EXT_PAT: ${{ secrets.ADO_PAT }}
-        run: |
-          echo "Azure DevOps authentication configured"
-
-      - name: Configure Azure DevOps Defaults
         run: |
           az devops configure \
             --defaults \
             organization=https://dev.azure.com/${{ secrets.ADO_ORG }} \
             project=${{ secrets.ADO_PROJECT }}
 
-      - name: Debug Configuration
-        run: |
-          echo "ORG=${{ secrets.ADO_ORG }}"
-          echo "PROJECT=${{ secrets.ADO_PROJECT }}"
-          echo "FEED=${{ secrets.ADO_FEED }}"
-
-      - name: Show Azure DevOps Defaults
-        run: |
-          az devops configure -l
-
-      - name: Publish Package
+      - name: Publish Terraform Module
         env:
           AZURE_DEVOPS_EXT_PAT: ${{ secrets.ADO_PAT }}
         run: |
@@ -55,6 +43,5 @@ jobs:
             --feed "${{ secrets.ADO_FEED }}" \
             --name "rg-module" \
             --version "1.0.${{ github.run_number }}" \
-            --description "Terraform RG Module" \
-            --path rg-module.zip \
-            --debug
+            --description "Terraform Resource Group Module" \
+            --path "./rg_module"
