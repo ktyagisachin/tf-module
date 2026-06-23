@@ -2,7 +2,8 @@ name: Publish Module to Azure DevOps Artifacts
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
 
 jobs:
   publish:
@@ -21,10 +22,12 @@ jobs:
           az extension add --name azure-devops --yes
 
       - name: Login to Azure DevOps
+        env:
+          AZURE_DEVOPS_EXT_PAT: ${{ secrets.ADO_PAT }}
         run: |
-          echo "${{ secrets.ADO_PAT }}" | az devops login
+          echo "Azure DevOps authentication configured"
 
-      - name: Configure Defaults
+      - name: Configure Azure DevOps Defaults
         run: |
           az devops configure \
             --defaults \
@@ -37,13 +40,13 @@ jobs:
           echo "PROJECT=${{ secrets.ADO_PROJECT }}"
           echo "FEED=${{ secrets.ADO_FEED }}"
 
-      - name: List Available Feeds
+      - name: Show Azure DevOps Defaults
         run: |
-          az artifacts feed list \
-            --organization "https://dev.azure.com/${{ secrets.ADO_ORG }}" \
-            --project "${{ secrets.ADO_PROJECT }}"
+          az devops configure -l
 
       - name: Publish Package
+        env:
+          AZURE_DEVOPS_EXT_PAT: ${{ secrets.ADO_PAT }}
         run: |
           az artifacts universal publish \
             --organization "https://dev.azure.com/${{ secrets.ADO_ORG }}" \
@@ -53,4 +56,5 @@ jobs:
             --name "rg-module" \
             --version "1.0.${{ github.run_number }}" \
             --description "Terraform RG Module" \
-            --path rg-module.zip
+            --path rg-module.zip \
+            --debug
