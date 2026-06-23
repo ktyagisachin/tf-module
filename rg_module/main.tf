@@ -1,4 +1,4 @@
-# this is rg module
+# this is rg module #
 resource "azurerm_resource_group" "rg" {
   name       = var.name
   location   = var.location
